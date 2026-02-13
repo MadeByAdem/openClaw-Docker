@@ -1,2 +1,16 @@
-willy.jpg
+# Environment variables (contains secrets)
+.env
+
+# Persistent data
+data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor files
+.vscode/
+.idea/
+
+# Claude Code local settings
 .claude/settings.local.json

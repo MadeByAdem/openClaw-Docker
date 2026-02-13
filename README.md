@@ -1,96 +1,186 @@
-# openClaw
+# openClaw Docker
 
-Run [OpenClaw](https://openclaw.com) in Docker on an Ubuntu VPS (should also work on a Raspberry Pi). No modifications or custom code — just a working Docker setup with Chromium browser support out of the box.
+Run [OpenClaw](https://openclaw.com) on your own server using Docker — no custom code, no modifications. This repository provides a ready-to-use Docker setup with Chromium browser support included.
 
-## What's included
+> **What is OpenClaw?** OpenClaw is an open-source AI assistant that connects to messaging platforms like WhatsApp, Telegram and Discord. This repository lets you self-host it in a Docker container on any Linux server.
 
-The [Dockerfile](Dockerfile) extends the official `alpine/openclaw` image with:
+---
 
-- **Chromium** and all its dependencies for browser automation skills
-- A `--no-sandbox` wrapper so Chromium runs properly inside Docker
-- Execute permission fixes for bundled skill scripts
+## Table of Contents
+
+- [What's Included](#whats-included)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Connecting Channels](#connecting-channels)
+- [Managing Your Server](#managing-your-server)
+- [Troubleshooting](#troubleshooting)
+- [File Overview](#file-overview)
+- [Data & Backups](#data--backups)
+- [License](#license)
+
+---
+
+## What's Included
+
+This project adds a thin Docker layer on top of the official `alpine/openclaw` image:
+
+- **Chromium browser** with all required dependencies for browser automation skills
+- A `--no-sandbox` wrapper so Chromium runs correctly inside Docker
+- Execute-permission fixes for bundled skill scripts
+
+Everything else is standard OpenClaw — no custom code.
+
+---
 
 ## Prerequisites
 
-- Ubuntu server (or similar) with Docker Engine + Compose v2
-- API key from an AI provider (Anthropic, OpenAI, etc.)
+Before you start, make sure you have:
 
-## Quick start
+1. **A Linux server** (Ubuntu recommended, Raspberry Pi also works)
+2. **Docker Engine + Docker Compose v2** installed on that server
+3. **An API key** from an AI provider (e.g. [Anthropic](https://console.anthropic.com/), [OpenAI](https://platform.openai.com/))
 
-### 1. Clone the repo
+### Installing Docker (if you don't have it yet)
 
-```bash
-git clone https://github.com/<you>/openClaw.git
-cd openClaw
-```
-
-### 2. Create your `.env` file
+If Docker is not yet installed on your server, run these commands:
 
 ```bash
-cp .env.example .env
+# Install Docker
+curl -fsSL https://get.docker.com | sudo sh
+
+# Allow your user to run Docker without sudo
+sudo usermod -aG docker $USER
+
+# Log out and back in for the group change to take effect
+exit
 ```
 
-### 3. Run setup
+After logging back in, verify it works:
+
+```bash
+docker --version
+docker compose version
+```
+
+Both commands should print a version number without errors.
+
+---
+
+## Installation
+
+Follow these steps one by one. Each step includes the exact command to run.
+
+### Step 1 — Clone this repository
+
+```bash
+git clone https://github.com/MadeByAdem/openClaw-Docker.git
+cd openClaw-Docker
+```
+
+### Step 2 — Run the setup script
 
 ```bash
 chmod +x setup.sh
 sudo ./setup.sh
 ```
 
-The script handles everything: creates data directories, generates a gateway token, builds the Docker image, runs onboarding, and starts the gateway.
+The setup script will automatically:
 
-Once it's running, the onboarding will walk you through connecting an AI provider and your first channel (Telegram, WhatsApp, Discord, etc.).
+1. Check that Docker and Docker Compose are installed
+2. Create the required data directories (`./data/config` and `./data/workspace`)
+3. Generate a `.env` file with a secure gateway token
+4. Build the Docker image
+5. Start the interactive onboarding process
 
-## After setup
+### Step 3 — Complete the onboarding
 
-Many OpenClaw skills (browser automation, cron jobs, email, etc.) can only be configured once the basics are running. You don't need to edit config files for this — just ask the AI assistant through your connected channel and it will set things up for you.
+The onboarding wizard will start automatically. It will ask you to:
 
-## Files
+1. **Enter your AI provider API key** (e.g. your Anthropic or OpenAI key)
+2. **Connect your first messaging channel** (WhatsApp, Telegram or Discord)
 
-| File | Purpose |
-| --- | --- |
-| `docker-compose.yaml` | Gateway + CLI service definitions |
-| `Dockerfile` | Custom image (Chromium + fixes) |
-| `.env.example` | Template for configuration |
-| `setup.sh` | Automated setup script |
+Follow the prompts on screen. When it's done, your OpenClaw gateway will be running.
 
-## Adding channels
+### Step 4 — Verify it's running
 
 ```bash
-# WhatsApp
+docker compose logs -f openclaw-gateway
+```
+
+You should see log output indicating the gateway is active. Press `Ctrl+C` to stop following the logs (the gateway keeps running in the background).
+
+---
+
+## Connecting Channels
+
+You can connect one or more messaging platforms after setup.
+
+### WhatsApp
+
+```bash
 docker compose run --rm openclaw-cli channels login
-
-# Telegram
-docker compose run --rm openclaw-cli channels add --channel telegram --token "<bot-token>"
-
-# Discord
-docker compose run --rm openclaw-cli channels add --channel discord --token "<bot-token>"
 ```
 
-### Telegram pairing
+A QR code will appear in your terminal. Scan it with WhatsApp on your phone to link the bot.
 
-On first contact the bot will request pairing. Approve with:
+### Telegram
+
+1. Create a bot via [@BotFather](https://t.me/BotFather) on Telegram and copy the bot token.
+2. Add the bot:
 
 ```bash
-docker compose run --rm openclaw-cli pairing approve telegram <CODE>
+docker compose run --rm openclaw-cli channels add --channel telegram --token "YOUR_BOT_TOKEN"
 ```
 
-### Telegram webhook conflict
-
-If the bot already has a webhook from another project:
+3. Send a message to your bot on Telegram. It will ask you to approve the pairing:
 
 ```bash
-wget -qO- "https://api.telegram.org/bot<BOT_TOKEN>/deleteWebhook"
-docker compose restart openclaw-gateway
+docker compose run --rm openclaw-cli pairing approve telegram CODE
 ```
 
-Or create a new bot via @BotFather if you want to keep the webhook for the other project.
+Replace `CODE` with the pairing code shown in the message.
+
+> **Webhook conflict?** If the bot was previously used in another project, you may need to remove the old webhook first:
+>
+> ```bash
+> curl -s "https://api.telegram.org/botYOUR_BOT_TOKEN/deleteWebhook"
+> docker compose restart openclaw-gateway
+> ```
+>
+> Alternatively, create a fresh bot via @BotFather.
+
+### Discord
+
+1. Create a bot on the [Discord Developer Portal](https://discord.com/developers/applications) and copy the bot token.
+2. Add the bot:
+
+```bash
+docker compose run --rm openclaw-cli channels add --channel discord --token "YOUR_BOT_TOKEN"
+```
+
+---
+
+## Managing Your Server
+
+Common commands for managing your OpenClaw instance:
+
+| Action | Command |
+| --- | --- |
+| View live logs | `docker compose logs -f openclaw-gateway` |
+| Stop the server | `docker compose down` |
+| Start the server | `docker compose up -d` |
+| Restart the server | `docker compose restart openclaw-gateway` |
+| Change configuration | `docker compose run --rm openclaw-cli configure` |
+| Rebuild after updates | `docker compose down && docker compose build --no-cache && docker compose up -d` |
+| Run a security audit | `docker compose run --rm openclaw-cli security audit --deep` |
+
+---
 
 ## Troubleshooting
 
-### Model not found
+### "Unknown model" error
 
-If you get `Unknown model: anthropic/claude-sonnet-4`, update the model in the config:
+If you see `Unknown model: anthropic/claude-sonnet-4`, the configured model name is outdated. Update it:
 
 ```bash
 docker compose exec openclaw-gateway sed -i \
@@ -105,44 +195,67 @@ Available Anthropic models:
 - `anthropic/claude-sonnet-4-5`
 - `anthropic/claude-haiku-4-5`
 
-### Skill installation fails (EACCES)
+### Skill installation fails (EACCES permission error)
 
-Some skills fail during onboarding due to permissions. Fix after setup:
+Some skills may fail to install during onboarding due to permissions. Fix it with:
 
 ```bash
 docker compose run --rm --user root openclaw-cli npm install -g clawhub
 ```
 
-## Management
+### Container won't start
+
+Check if Docker is running:
 
 ```bash
-# View logs
-docker compose logs -f openclaw-gateway
+sudo systemctl status docker
+```
 
-# Stop
-docker compose down
+If it's not active, start it:
 
-# Start
+```bash
+sudo systemctl start docker
+```
+
+Then try again:
+
+```bash
 docker compose up -d
-
-# Rebuild after Dockerfile changes
-docker compose down && docker compose build --no-cache && docker compose up -d
-
-# Change configuration
-docker compose run --rm openclaw-cli configure
-
-# Security audit
-docker compose run --rm openclaw-cli security audit --deep
 ```
 
-## Data
+---
 
-All persistent data is stored in `./data/`:
+## File Overview
 
-```text
+| File | Description |
+| --- | --- |
+| `docker-compose.yaml` | Defines the gateway and CLI services |
+| `Dockerfile` | Extends the official OpenClaw image with Chromium |
+| `.env.example` | Template for environment variables |
+| `setup.sh` | Automated setup script (run once) |
+
+---
+
+## Data & Backups
+
+All persistent data is stored in the `./data/` directory:
+
+```
 data/
-├── config/         # ~/.openclaw — configuration, API keys, memory
-└── workspace/      # Files the agent works with
+├── config/       # OpenClaw configuration, API keys, memory
+└── workspace/    # Files created by the AI assistant
 ```
 
-Backup = copy the `data/` directory.
+**To back up your instance**, simply copy the entire `data/` directory:
+
+```bash
+cp -r ./data ./data-backup-$(date +%Y%m%d)
+```
+
+**To restore**, stop the server, replace the `data/` directory with your backup, and start again.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) — free to use, modify and distribute.
