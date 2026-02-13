@@ -25,12 +25,12 @@ RUN apt-get update \
        xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Wrapper die Chromium altijd met --no-sandbox start (vereist in Docker)
+# Wrapper that always starts Chromium with --no-sandbox (required in Docker)
 RUN printf '#!/bin/sh\nexec /usr/bin/chromium --no-sandbox --disable-gpu --disable-dev-shm-usage "$@"\n' \
     > /usr/local/bin/chromium-docker \
     && chmod +x /usr/local/bin/chromium-docker
 
-# Fix execute permissions op skill scripts
+# Fix execute permissions on skill scripts
 RUN find /app/skills -type f -name "*.sh" -exec chmod +x {} \;
 
 ENV CHROME_BIN=/usr/local/bin/chromium-docker
