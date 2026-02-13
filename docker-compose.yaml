@@ -1,0 +1,50 @@
+services:
+  openclaw-gateway:
+    build: .
+    image: openclaw-custom
+    container_name: openclaw-gateway
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      CHROME_BIN: /usr/local/bin/chromium-docker
+      CHROMIUM_FLAGS: "--no-sandbox --disable-gpu --disable-dev-shm-usage"
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-./data/config}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-./data/workspace}:/home/node/.openclaw/workspace
+    shm_size: '2gb'
+    ports:
+      - "127.0.0.1:18789:18789"
+      - "127.0.0.1:18790:18790"
+    init: true
+    restart: unless-stopped
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--bind",
+        "lan",
+        "--port",
+        "18789",
+      ]
+
+  openclaw-cli:
+    build: .
+    image: openclaw-custom
+    container_name: openclaw-cli
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      BROWSER: echo
+      CHROME_BIN: /usr/local/bin/chromium-docker
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-./data/config}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-./data/workspace}:/home/node/.openclaw/workspace
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+    profiles:
+      - cli
