@@ -14,6 +14,7 @@ Run [OpenClaw](https://openclaw.com) on your own server using Docker — no cust
 - [Connecting Channels](#connecting-channels)
 - [Managing Your Server](#managing-your-server)
 - [Troubleshooting](#troubleshooting)
+- [Choosing a Model](#choosing-a-model)
 - [File Overview](#file-overview)
 - [Data & Backups](#data--backups)
 - [License](#license)
@@ -195,6 +196,8 @@ Available Anthropic models:
 - `anthropic/claude-sonnet-4-5`
 - `anthropic/claude-haiku-4-5`
 
+> **Which model should I choose?** See [Choosing a Model](#choosing-a-model) below for guidance.
+
 ### Skill installation fails (EACCES permission error)
 
 Some skills may fail to install during onboarding due to permissions. Fix it with:
@@ -222,6 +225,67 @@ Then try again:
 ```bash
 docker compose up -d
 ```
+
+---
+
+## Choosing a Model
+
+Your choice of AI model has a direct impact on the quality of responses and your API costs. Here's what you need to know.
+
+### Model comparison
+
+| Model | Strengths | Cost level |
+| --- | --- | --- |
+| `anthropic/claude-haiku-4-5` | Fast, lightweight, good for simple tasks | Lowest |
+| `anthropic/claude-sonnet-4-5` | Balanced: capable and cost-effective | Medium |
+| `anthropic/claude-opus-4-5` | Most capable, best for complex reasoning | Highest |
+
+### Recommendations
+
+- **Start with Sonnet.** It offers the best balance between capability and cost for most use cases. This is a solid default for everyday conversations and tasks.
+- **Use Haiku for high-volume, simple tasks.** If your bot handles many short interactions (quick Q&A, simple lookups), Haiku keeps costs low while still delivering good results.
+- **Reserve Opus for complex work.** Opus excels at multi-step reasoning, detailed analysis and creative tasks — but it costs significantly more per message. Only use it when you genuinely need the extra capability.
+
+### Advanced: use different models per task type
+
+You can significantly reduce costs by routing tasks to the right model automatically. Instead of using a single model for everything, configure your assistant to:
+
+- **Use Haiku for routine tasks** — emails, calendar queries, simple Q&A, summaries and other straightforward interactions.
+- **Use Sonnet for complex tasks** — code generation, debugging, technical analysis and multi-step reasoning.
+
+This "model routing" approach can reduce your per-session costs by 60–70%, because the majority of everyday interactions don't need the most capable (and most expensive) model.
+
+You can set this up by defining task categories and model assignments in your OpenClaw configuration or via an `AGENTS.md` file in your workspace.
+
+### Advanced: use Claude Code CLI for code tasks
+
+If you frequently ask your assistant to analyze or generate code, consider offloading those tasks to [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic's CLI tool). Claude Code is optimized for coding workflows and can be more efficient than running code tasks through the chat interface, because it:
+
+- Sends only the relevant code context instead of the full conversation history
+- Uses targeted file reads instead of loading entire documents
+- Avoids unnecessary overhead from chat-based interaction
+
+You can configure OpenClaw to prioritize Claude Code CLI for code-related skills.
+
+### Keeping costs under control
+
+- **Monitor your API usage** through your provider's dashboard ([Anthropic Console](https://console.anthropic.com/), [OpenAI Platform](https://platform.openai.com/)). Set spending alerts and budget limits before going live.
+- **Set a monthly budget limit** with your API provider to avoid surprises. Both Anthropic and OpenAI allow you to configure hard spending caps.
+- **Minimize context size.** Only load documents and files when they're actually needed instead of including them in every message. This can drastically reduce the number of tokens sent per request.
+- **Longer conversations cost more.** Each message in a conversation includes the full history, so costs grow as conversations get longer. Consider restarting conversations when the topic changes.
+- **Use text-to-speech sparingly.** If your assistant supports TTS, configure it to only generate audio when the user sends a voice message or explicitly asks for it — not on every response.
+- **Skills and tools add cost.** When the assistant uses browser automation or other skills, it generates extra API calls. Keep this in mind for automated workflows.
+- **Test in low-traffic environments first.** Before connecting a busy group chat, test your setup with one or two users to get a feel for actual usage patterns and costs.
+
+### Changing your model
+
+You can switch models at any time via the CLI:
+
+```bash
+docker compose run --rm openclaw-cli configure
+```
+
+Or edit the configuration file directly at `./data/config/openclaw.json`.
 
 ---
 
