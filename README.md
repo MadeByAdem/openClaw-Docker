@@ -14,6 +14,7 @@ Run [OpenClaw](https://openclaw.com) on your own server using Docker — no cust
 - [Connecting Channels](#connecting-channels)
 - [Managing Your Server](#managing-your-server)
 - [Troubleshooting](#troubleshooting)
+- [Choosing a Model](#choosing-a-model)
 - [File Overview](#file-overview)
 - [Data & Backups](#data--backups)
 - [License](#license)
@@ -195,6 +196,8 @@ Available Anthropic models:
 - `anthropic/claude-sonnet-4-5`
 - `anthropic/claude-haiku-4-5`
 
+> **Which model should I choose?** See [Choosing a Model](#choosing-a-model) below for guidance.
+
 ### Skill installation fails (EACCES permission error)
 
 Some skills may fail to install during onboarding due to permissions. Fix it with:
@@ -222,6 +225,44 @@ Then try again:
 ```bash
 docker compose up -d
 ```
+
+---
+
+## Choosing a Model
+
+Your choice of AI model has a direct impact on the quality of responses and your API costs. Here's what you need to know.
+
+### Model comparison
+
+| Model | Strengths | Cost level |
+| --- | --- | --- |
+| `anthropic/claude-haiku-4-5` | Fast, lightweight, good for simple tasks | Lowest |
+| `anthropic/claude-sonnet-4-5` | Balanced: capable and cost-effective | Medium |
+| `anthropic/claude-opus-4-5` | Most capable, best for complex reasoning | Highest |
+
+### Recommendations
+
+- **Start with Sonnet.** It offers the best balance between capability and cost for most use cases. This is a solid default for everyday conversations and tasks.
+- **Use Haiku for high-volume, simple tasks.** If your bot handles many short interactions (quick Q&A, simple lookups), Haiku keeps costs low while still delivering good results.
+- **Reserve Opus for complex work.** Opus excels at multi-step reasoning, detailed analysis and creative tasks — but it costs significantly more per message. Only use it when you genuinely need the extra capability.
+
+### Keeping costs under control
+
+- **Monitor your API usage** through your provider's dashboard ([Anthropic Console](https://console.anthropic.com/), [OpenAI Platform](https://platform.openai.com/)). Set spending alerts and budget limits before going live.
+- **Set a monthly budget limit** with your API provider to avoid surprises. Both Anthropic and OpenAI allow you to configure hard spending caps.
+- **Longer conversations cost more.** Each message in a conversation includes the full history, so costs grow as conversations get longer. Consider restarting conversations when the topic changes.
+- **Skills and tools add cost.** When the assistant uses browser automation or other skills, it generates extra API calls. Keep this in mind for automated workflows.
+- **Test in low-traffic environments first.** Before connecting a busy group chat, test your setup with one or two users to get a feel for actual usage patterns and costs.
+
+### Changing your model
+
+You can switch models at any time via the CLI:
+
+```bash
+docker compose run --rm openclaw-cli configure
+```
+
+Or edit the configuration file directly at `./data/config/openclaw.json`.
 
 ---
 
