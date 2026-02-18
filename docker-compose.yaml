@@ -18,6 +18,12 @@ services:
       - "127.0.0.1:18790:18790"
     init: true
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://127.0.0.1:18789',res=>{process.exit(res.statusCode<500?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     command:
       [
         "node",

@@ -72,15 +72,84 @@ echo "(Follow the steps to configure your AI provider and channels)"
 echo ""
 docker compose run --rm openclaw-cli onboard
 
+# --- Ensure bind mode is set to "lan" for Docker networking ---
+CONFIG_FILE="${OPENCLAW_CONFIG_DIR:-./data/config}/openclaw.json"
+if [ -f "$CONFIG_FILE" ]; then
+  if command -v python3 &>/dev/null; then
+    python3 -c "
+import json, sys
+try:
+    with open('$CONFIG_FILE', 'r') as f:
+        config = json.load(f)
+    if config.get('bind') != 'lan':
+        config['bind'] = 'lan'
+        with open('$CONFIG_FILE', 'w') as f:
+            json.dump(config, f, indent=2)
+        print('[OK] Set bind mode to \"lan\" in openclaw.json')
+    else:
+        print('[OK] Bind mode already set to \"lan\"')
+except Exception as e:
+    print(f'[!]  Could not update bind mode: {e}', file=sys.stderr)
+"
+  else
+    echo "[!]  python3 not found, skipping bind mode fix."
+    echo "     If the gateway fails, manually set \"bind\": \"lan\" in $CONFIG_FILE"
+  fi
+fi
+
 # --- Start the gateway ---
 echo ""
 echo "Starting gateway..."
 docker compose up -d openclaw-gateway
 
+# --- Verify the gateway started successfully ---
 echo ""
-echo "============================================"
-echo " OpenClaw is running on 127.0.0.1:18789"
-echo "============================================"
+echo "Waiting for gateway to start..."
+RETRIES=10
+HEALTHY=false
+for i in $(seq 1 $RETRIES); do
+  sleep 3
+  STATUS=$(docker inspect --format='{{.State.Status}}' openclaw-gateway 2>/dev/null || echo "missing")
+  HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' openclaw-gateway 2>/dev/null || echo "unknown")
+
+  if [ "$STATUS" = "running" ]; then
+    if [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "none" ] || [ "$HEALTH" = "starting" ]; then
+      # Check if container is still running after a brief moment (not crash-looping)
+      if [ "$i" -ge 3 ]; then
+        HEALTHY=true
+        break
+      fi
+    fi
+    if [ "$HEALTH" = "unhealthy" ]; then
+      echo "[!]  Gateway health check failed (attempt $i/$RETRIES)..."
+    fi
+  elif [ "$STATUS" = "restarting" ]; then
+    echo "[!]  Gateway is restarting (attempt $i/$RETRIES)..."
+  else
+    echo "[!]  Gateway status: $STATUS (attempt $i/$RETRIES)..."
+  fi
+done
+
+if [ "$HEALTHY" = true ]; then
+  echo ""
+  echo "============================================"
+  echo " OpenClaw is running on 127.0.0.1:18789"
+  echo "============================================"
+else
+  echo ""
+  echo "============================================"
+  echo " [!] Gateway may not have started correctly"
+  echo "============================================"
+  echo ""
+  echo " Check the logs for errors:"
+  echo "   docker compose logs openclaw-gateway"
+  echo ""
+  echo " Common fixes:"
+  echo "   - Verify your API key is correct"
+  echo "   - Check data directory permissions: sudo chown -R 1000:1000 ./data"
+  echo "   - Rebuild the image: docker compose build --no-cache"
+  echo "   - Re-run onboarding: docker compose run --rm openclaw-cli onboard"
+fi
 echo ""
 echo " Gateway token is stored in .env"
 echo ""

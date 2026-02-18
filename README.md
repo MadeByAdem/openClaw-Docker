@@ -206,6 +206,25 @@ Some skills may fail to install during onboarding due to permissions. Fix it wit
 docker compose run --rm --user root openclaw-cli npm install -g clawhub
 ```
 
+### Health check failed: gateway closed (1006)
+
+If you see `Health check failed: gateway closed (1006 abnormal closure)` with `Bind: loopback`, the gateway's bind mode is incorrect for Docker. The config file (`openclaw.json`) may have overridden the bind setting.
+
+**Fix the bind mode:**
+
+```bash
+docker compose exec openclaw-gateway sed -i 's/"bind":\s*"loopback"/"bind": "lan"/g' /home/node/.openclaw/openclaw.json
+docker compose restart openclaw-gateway
+```
+
+Or edit `./data/config/openclaw.json` directly and change `"bind": "loopback"` to `"bind": "lan"`, then restart:
+
+```bash
+docker compose restart openclaw-gateway
+```
+
+> **Why does this happen?** Inside a Docker container, the gateway must bind to all interfaces (`lan` / `0.0.0.0`) so Docker's port forwarding can reach it. The `loopback` setting binds only to `127.0.0.1` inside the container, making it unreachable from the host.
+
 ### Container won't start
 
 Check if Docker is running:
