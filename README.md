@@ -12,6 +12,7 @@ Run [OpenClaw](https://openclaw.com) on your own server using Docker — no cust
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Connecting Channels](#connecting-channels)
+- [Accessing the Dashboard](#accessing-the-dashboard)
 - [Managing Your Server](#managing-your-server)
 - [Troubleshooting](#troubleshooting)
 - [Choosing a Model](#choosing-a-model)
@@ -110,6 +111,18 @@ docker compose logs -f openclaw-gateway
 
 You should see log output indicating the gateway is active. Press `Ctrl+C` to stop following the logs (the gateway keeps running in the background).
 
+### Tip: ask the AI itself for help
+
+Once your bot is running, you can ask it to help you manage your OpenClaw instance. The AI has knowledge of its own configuration and can guide you through common tasks — just message it like you would a colleague. For example:
+
+- *"Connect my Telegram bot"* — it will walk you through the BotFather setup and pairing steps
+- *"Switch my model to Claude Sonnet"* — it can update its own configuration
+- *"Why am I getting an error?"* — paste the error message and it will suggest a fix
+- *"Set up a cron job to send me a daily summary"* — it can configure scheduled tasks
+- *"What skills do you have?"* — it will list its available capabilities
+
+You don't need to memorize CLI commands. If you're unsure about something, just ask your bot.
+
 ---
 
 ## Connecting Channels
@@ -158,6 +171,74 @@ Replace `CODE` with the pairing code shown in the message.
 ```bash
 docker compose run --rm openclaw-cli channels add --channel discord --token "YOUR_BOT_TOKEN"
 ```
+
+---
+
+## Accessing the Dashboard
+
+OpenClaw includes a web dashboard (Control UI) for managing your instance. The setup script automatically configures it for you.
+
+### Local access
+
+After running `setup.sh`, the dashboard URL is printed in the terminal. You can also retrieve it at any time:
+
+```bash
+docker compose run --rm openclaw-cli dashboard --no-open
+```
+
+Open the printed URL in your browser. It looks like this:
+
+```text
+http://127.0.0.1:18789/#token=YOUR_GATEWAY_TOKEN
+```
+
+> **Important:** The token is passed after the `#` (hash), not as a `?` query parameter.
+
+### Remote access (reverse proxy)
+
+If you access OpenClaw through a reverse proxy (Cloudflare Tunnel, nginx, Caddy, etc.), the setup script already configures the required settings. If you set up a reverse proxy after initial installation, add these settings to `./data/config/openclaw.json`:
+
+```json
+{
+  "gateway": {
+    "bind": "lan",
+    "trustedProxies": ["172.16.0.0/12"],
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  }
+}
+```
+
+Then restart the gateway:
+
+```bash
+docker compose restart openclaw-gateway
+```
+
+Open the dashboard in your browser using your domain:
+
+```text
+https://your-domain.com/#token=YOUR_GATEWAY_TOKEN
+```
+
+Replace `YOUR_GATEWAY_TOKEN` with the token from your `.env` file.
+
+**What these settings do:**
+
+| Setting | Purpose |
+| --- | --- |
+| `bind: "lan"` | Allows connections from Docker's internal network (default `loopback` blocks them) |
+| `trustedProxies` | Tells the gateway to trust proxy headers from Docker's network (`172.16.0.0/12`) |
+| `controlUi.allowInsecureAuth` | Allows the dashboard to authenticate over HTTP (needed when TLS terminates at the proxy) |
+
+### Troubleshooting the dashboard
+
+**"gateway token mismatch"** — The token in your browser URL does not match the token in `openclaw.json`. Check that `gateway.auth.token` in `./data/config/openclaw.json` matches the `OPENCLAW_GATEWAY_TOKEN` in your `.env` file. If they differ, update one to match the other and restart.
+
+**"pairing required"** — The gateway doesn't trust the proxy connection. Make sure `trustedProxies` and `controlUi.allowInsecureAuth` are set as shown above, then restart the gateway.
+
+**"Proxy headers detected from untrusted address"** — Same cause as above. Add `trustedProxies` with the Docker network range to your gateway config.
 
 ---
 
@@ -266,6 +347,14 @@ If you frequently ask your assistant to analyze or generate code, consider offlo
 - Avoids unnecessary overhead from chat-based interaction
 
 You can configure OpenClaw to prioritize Claude Code CLI for code-related skills.
+
+### OpenAI OAuth (use your paid subscription instead of API credits)
+
+If you have a paid OpenAI account (ChatGPT Plus, Pro, or Team), you can connect via **OAuth** instead of an API key. This means usage is deducted from your subscription allowance rather than billed separately through the API — which can be significantly cheaper or even free depending on your plan.
+
+During onboarding, select **OpenAI** as your provider and choose the **OAuth** login method. OpenClaw will open a browser-based login flow. Once authenticated, your OpenAI models (like `gpt-4o`) will use your subscription quota.
+
+> **Tip:** You can combine providers — for example, use OpenAI OAuth for GPT models and an Anthropic API key for Claude models. Configure fallback models in `./data/config/openclaw.json` under `agents.defaults.model`.
 
 ### Keeping costs under control
 

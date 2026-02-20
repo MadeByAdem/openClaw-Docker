@@ -72,6 +72,41 @@ echo "(Follow the steps to configure your AI provider and channels)"
 echo ""
 docker compose run --rm openclaw-cli onboard
 
+# --- Patch openclaw.json for Docker networking + dashboard access ---
+CONFIG_FILE="${OPENCLAW_CONFIG_DIR:-./data/config}/openclaw.json"
+GATEWAY_TOKEN=$(grep -oP '(?<=OPENCLAW_GATEWAY_TOKEN=).+' "$ENV_FILE")
+
+if [ -f "$CONFIG_FILE" ]; then
+  python3 -c "
+import json, sys
+
+with open('$CONFIG_FILE') as f:
+    cfg = json.load(f)
+
+gw = cfg.setdefault('gateway', {})
+
+# Bind to LAN so Docker port-forwarding works (loopback blocks it)
+gw['bind'] = 'lan'
+
+# Sync the gateway token from .env into the config file
+gw.setdefault('auth', {})['mode'] = 'token'
+gw['auth']['token'] = '$GATEWAY_TOKEN'
+
+# Trust Docker internal networks so reverse proxies (Cloudflare, nginx) work
+gw['trustedProxies'] = ['172.16.0.0/12']
+
+# Allow the dashboard to work over HTTP (needed for reverse proxy setups)
+gw['controlUi'] = {'allowInsecureAuth': True}
+
+with open('$CONFIG_FILE', 'w') as f:
+    json.dump(cfg, f, indent=2)
+" && echo "[OK] Gateway config patched (bind=lan, trustedProxies, dashboard access)" \
+  || echo "[!]  Could not patch gateway config. You may need to edit openclaw.json manually."
+else
+  echo "[!]  Config file not found at $CONFIG_FILE — skipping gateway patch."
+  echo "     The onboarding wizard may not have created it yet."
+fi
+
 # --- Start the gateway ---
 echo ""
 echo "Starting gateway..."
@@ -81,6 +116,8 @@ echo ""
 echo "============================================"
 echo " OpenClaw is running on 127.0.0.1:18789"
 echo "============================================"
+echo ""
+echo " Dashboard: http://127.0.0.1:18789/#token=${GATEWAY_TOKEN}"
 echo ""
 echo " Gateway token is stored in .env"
 echo ""
@@ -93,4 +130,8 @@ echo " Add channels:"
 echo "   docker compose run --rm openclaw-cli channels login                              # WhatsApp"
 echo "   docker compose run --rm openclaw-cli channels add --channel telegram --token T   # Telegram"
 echo "   docker compose run --rm openclaw-cli channels add --channel discord --token T    # Discord"
+echo ""
+echo " Remote dashboard (via reverse proxy):"
+echo "   https://your-domain.com/#token=${GATEWAY_TOKEN}"
+echo "   See README.md for reverse proxy setup instructions."
 echo "============================================"
