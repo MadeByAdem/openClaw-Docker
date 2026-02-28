@@ -3,6 +3,7 @@ FROM alpine/openclaw
 USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+       curl \
        chromium \
        fonts-liberation \
        libasound2 \
