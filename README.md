@@ -42,6 +42,7 @@
 - [📦 What&#39;s Included](#-whats-included)
 - [✅ Prerequisites](#-prerequisites)
 - [🚀 Installation](#-installation)
+- [🎨 Personalization](#-personalization)
 - [💬 Connecting Channels](#-connecting-channels)
 - [🖥️ Accessing the Dashboard](#️-accessing-the-dashboard)
 - [⚙️ Managing Your Server](#️-managing-your-server)
@@ -160,6 +161,51 @@ You should see log output indicating the gateway is active. Press `Ctrl+C` to st
 > - *"What skills do you have?"* — lists available capabilities
 >
 > You don't need to memorize CLI commands. If you're unsure, just ask your bot.
+
+### Step 5 — Personalize your agent (optional)
+
+Make your AI agent yours — give it a name, personality, and context about you:
+
+```bash
+chmod +x personalize.sh
+./personalize.sh
+```
+
+See [Personalization](#-personalization) for details.
+
+---
+
+## 🎨 Personalization
+
+After the initial setup, you can personalize your AI agent by running the personalization script. This creates configuration files in the workspace that define your agent's identity, personality, and behavior.
+
+```bash
+./personalize.sh
+```
+
+The script walks you through creating these files:
+
+| File | Purpose |
+| --- | --- |
+| `IDENTITY.md` | Your agent's name, roles, language, and how it introduces itself |
+| `SOUL.md` | Core values, communication style, and personality |
+| `USER.md` | About you — name, timezone, preferences, so the agent knows who it's helping |
+| `AGENTS.md` | Behavioral guidelines — memory management, safety rules, group chat behavior |
+| `CONVENTIONS.md` | Coding standards, git workflow, project terminology (for developers) |
+| `TOOLS.md` | Integration notes — scripts, APIs, credentials locations |
+| `HEARTBEAT.md` | Periodic tasks your agent should check on |
+| `MEMORY.md` | Long-term memory (starts empty, your agent fills this over time) |
+
+For each file, you can:
+
+- **Edit** — open in your text editor to customize
+- **View example** — see a working example before editing
+- **Skip** — use the default template (you can always edit later)
+
+The script restarts OpenClaw automatically when done. You can also edit these files manually at any time in `./data/workspace/` and restart with `docker compose restart openclaw-gateway`.
+
+> [!TIP]
+> Check the `workspace/` directory in this repository for a complete example of a personalized agent workspace.
 
 ---
 
@@ -866,6 +912,7 @@ Or edit the configuration file directly at `./data/config/openclaw.json`.
 | `Dockerfile`          | 📦 Extends the official OpenClaw image with Chromium browser support |
 | `.env.example`        | 🔑 Template for environment variables                                |
 | `setup.sh`            | 🚀 Automated setup script with security auditing (run once)          |
+| `personalize.sh`      | 🎨 Agent personalization wizard (run after setup)                     |
 | `SECURITY.md`         | 🔒 Security policy and hardening documentation                       |
 | `.dockerignore`       | 🚫 Prevents secrets from leaking into the Docker build               |
 
