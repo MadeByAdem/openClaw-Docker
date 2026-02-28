@@ -1,50 +1,86 @@
-# openClaw Docker
+<p align="center">
+  <img src="https://openclaw.ai/blog/openclaw-logo-text.png" alt="OpenClaw" width="300" />
+  <br />
+  <img src="https://www.docker.com/wp-content/uploads/2022/03/Moby-logo.png" alt="Docker" width="80" />
+</p>
 
-Run [OpenClaw](https://openclaw.com) on your own server using Docker — no custom code, no modifications. This repository provides a ready-to-use Docker setup with Chromium browser support included.
+<h1 align="center">openClaw Docker</h1>
 
-> **What is OpenClaw?** OpenClaw is an open-source AI assistant that connects to messaging platforms like WhatsApp, Telegram and Discord. This repository lets you self-host it in a Docker container on any Linux server.
+<p align="center">
+  <strong>Self-host OpenClaw on your own server — hardened, Dockerized, ready to go.</strong>
+</p>
 
----
-
-## Table of Contents
-
-- [What's Included](#whats-included)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Connecting Channels](#connecting-channels)
-- [Accessing the Dashboard](#accessing-the-dashboard)
-- [Managing Your Server](#managing-your-server)
-- [Troubleshooting](#troubleshooting)
-- [Choosing a Model](#choosing-a-model)
-- [File Overview](#file-overview)
-- [Data & Backups](#data--backups)
-- [License](#license)
+<p align="center">
+  <a href="https://github.com/MadeByAdem/openClaw-Docker/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
+  <a href="#security"><img src="https://img.shields.io/badge/security-hardened-brightgreen.svg" alt="Security Hardened" /></a>
+  <img src="https://img.shields.io/badge/docker-ready-2496ED.svg?logo=docker&logoColor=white" alt="Docker Ready" />
+  <img src="https://img.shields.io/badge/platform-linux%20%7C%20raspberry%20pi-lightgrey.svg" alt="Platform" />
+</p>
 
 ---
 
-## What's Included
+> [!CAUTION]
+>
+> ## ⛔🔴 Security Warning — Read Before Use
+>
+> **OpenClaw is still new and actively in development.** The creators themselves and independent security researchers warn about significant security risks:
+>
+> - 🔓 [Aikido](https://www.aikido.dev/blog/why-trying-to-secure-openclaw-is-ridiculous) — *"Why trying to secure OpenClaw is ridiculous"*
+> - 🏢 [Microsoft](https://www.microsoft.com/en-us/security/blog/2026/02/19/running-openclaw-safely-identity-isolation-runtime-risk/) — *"Run OpenClaw only in fully isolated environments"*
+> - 🌐 [Cisco](https://blogs.cisco.com/ai/personal-ai-agents-like-openclaw-are-a-security-nightmare) — *"Personal AI agents like OpenClaw are a security nightmare"*
+>
+> **⚠️ A completely secure setup is not currently achievable.** Despite the hardening measures in this repository, **you remain fully responsible** for evaluating the risks of running OpenClaw in your environment. Do not run it on machines with access to sensitive data without understanding the implications.
+>
+> 👉 See [Security](#-security) and [SECURITY.md](SECURITY.md) for details and hardening measures.
+
+> **What is OpenClaw?** OpenClaw is an open-source AI assistant that connects to messaging platforms like WhatsApp, Telegram and Discord. This repository lets you self-host it in a Docker container on any Linux server — with security hardening built in.
+
+---
+
+## 📋 Table of Contents
+
+- [📦 What&#39;s Included](#-whats-included)
+- [✅ Prerequisites](#-prerequisites)
+- [🚀 Installation](#-installation)
+- [💬 Connecting Channels](#-connecting-channels)
+- [🖥️ Accessing the Dashboard](#️-accessing-the-dashboard)
+- [⚙️ Managing Your Server](#️-managing-your-server)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [🔒 Security](#-security)
+- [🔄 Updating](#-updating)
+- [📦 Migrating to Hardened Setup](#-migrating-to-hardened-setup)
+- [🤖 Choosing a Model](#-choosing-a-model)
+- [📁 File Overview](#-file-overview)
+- [💾 Data &amp; Backups](#-data--backups)
+- [📄 License](#-license)
+
+---
+
+## 📦 What's Included
 
 This project adds a thin Docker layer on top of the official `alpine/openclaw` image:
 
-- **Chromium browser** with all required dependencies for browser automation skills
-- A `--no-sandbox` wrapper so Chromium runs correctly inside Docker
-- Execute-permission fixes for bundled skill scripts
+- 🌐 **Chromium browser** with all required dependencies for browser automation skills
+- 🐳 A `--no-sandbox` wrapper so Chromium runs correctly inside Docker
+- 🔧 Execute-permission fixes for bundled skill scripts
+- 🔒 **Security hardening** — read-only filesystem, dropped capabilities, rate limiting, health checks
 
 Everything else is standard OpenClaw — no custom code.
 
 ---
 
-## Prerequisites
+## ✅ Prerequisites
 
 Before you start, make sure you have:
 
-1. **A Linux server** (Ubuntu recommended, Raspberry Pi also works)
-2. **Docker Engine + Docker Compose v2** installed on that server
-3. **An API key** from an AI provider (e.g. [Anthropic](https://console.anthropic.com/), [OpenAI](https://platform.openai.com/))
+| # | Requirement                          | Details                                                                   |
+| - | ------------------------------------ | ------------------------------------------------------------------------- |
+| 1 | **Linux server**               | Ubuntu recommended, Raspberry Pi also works                               |
+| 2 | **Docker Engine + Compose v2** | [Install Docker](https://docs.docker.com/engine/install/)                    |
+| 3 | **AI provider API key**        | Any OpenAI-compatible provider (OpenAI, Anthropic, Google, Mistral, etc.) |
 
-### Installing Docker (if you don't have it yet)
-
-If Docker is not yet installed on your server, run these commands:
+<details>
+<summary>📥 <strong>Installing Docker (if you don't have it yet)</strong></summary>
 
 ```bash
 # Install Docker
@@ -66,9 +102,11 @@ docker compose version
 
 Both commands should print a version number without errors.
 
+</details>
+
 ---
 
-## Installation
+## 🚀 Installation
 
 Follow these steps one by one. Each step includes the exact command to run.
 
@@ -88,17 +126,18 @@ sudo ./setup.sh
 
 The setup script will automatically:
 
-1. Check that Docker and Docker Compose are installed
-2. Create the required data directories (`./data/config` and `./data/workspace`)
-3. Generate a `.env` file with a secure gateway token
-4. Build the Docker image
-5. Start the interactive onboarding process
+1. ✅ Check that Docker and Docker Compose are installed
+2. 📁 Create the required data directories (`./data/config` and `./data/workspace`)
+3. 🔑 Generate a `.env` file with a secure 256-bit gateway token
+4. 🐳 Build the Docker image with security hardening
+5. 🧙 Start the interactive onboarding process
+6. 🔒 Run `doctor --repair` and `security audit`
 
 ### Step 3 — Complete the onboarding
 
 The onboarding wizard will start automatically. It will ask you to:
 
-1. **Enter your AI provider API key** (e.g. your Anthropic or OpenAI key)
+1. **Enter your AI provider API key** (e.g. OpenAI, Anthropic, Google, Mistral, or any compatible provider)
 2. **Connect your first messaging channel** (WhatsApp, Telegram or Discord)
 
 Follow the prompts on screen. When it's done, your OpenClaw gateway will be running.
@@ -111,42 +150,55 @@ docker compose logs -f openclaw-gateway
 
 You should see log output indicating the gateway is active. Press `Ctrl+C` to stop following the logs (the gateway keeps running in the background).
 
-### Tip: ask the AI itself for help
-
-Once your bot is running, you can ask it to help you manage your OpenClaw instance. The AI has knowledge of its own configuration and can guide you through common tasks — just message it like you would a colleague. For example:
-
-- *"Connect my Telegram bot"* — it will walk you through the BotFather setup and pairing steps
-- *"Switch my model to Claude Sonnet"* — it can update its own configuration
-- *"Why am I getting an error?"* — paste the error message and it will suggest a fix
-- *"Set up a cron job to send me a daily summary"* — it can configure scheduled tasks
-- *"What skills do you have?"* — it will list its available capabilities
-
-You don't need to memorize CLI commands. If you're unsure about something, just ask your bot.
+> [!TIP]
+> **Ask the AI itself for help!** Once your bot is running, you can message it directly:
+>
+> - *"Connect my Telegram bot"* — walks you through BotFather setup
+> - *"Switch my model to Claude Sonnet"* — updates its own config
+> - *"Why am I getting an error?"* — paste the error and it suggests a fix
+> - *"Set up a daily summary cron job"* — configures scheduled tasks
+> - *"What skills do you have?"* — lists available capabilities
+>
+> You don't need to memorize CLI commands. If you're unsure, just ask your bot.
 
 ---
 
-## Connecting Channels
+## 💬 Connecting Channels
 
 You can connect one or more messaging platforms after setup.
 
 ### WhatsApp
 
+1. Enable the WhatsApp plugin (skip if you already selected WhatsApp during onboarding):
+
 ```bash
-docker compose run --rm openclaw-cli channels login
+docker compose run --rm openclaw-cli plugins enable whatsapp
 ```
 
-A QR code will appear in your terminal. Scan it with WhatsApp on your phone to link the bot.
+2. Login and scan the QR code:
+
+```bash
+docker compose run --rm openclaw-cli channels login --channel whatsapp
+```
+
+A QR code will appear in your terminal. Scan it with WhatsApp on your phone (**Settings > Linked Devices > Link a Device**).
 
 ### Telegram
 
-1. Create a bot via [@BotFather](https://t.me/BotFather) on Telegram and copy the bot token.
-2. Add the bot:
+1. Enable the Telegram plugin (skip if you already selected Telegram during onboarding):
+
+```bash
+docker compose run --rm openclaw-cli plugins enable telegram
+```
+
+2. Create a bot via [@BotFather](https://t.me/BotFather) on Telegram and copy the bot token.
+3. Add the bot:
 
 ```bash
 docker compose run --rm openclaw-cli channels add --channel telegram --token "YOUR_BOT_TOKEN"
 ```
 
-3. Send a message to your bot on Telegram. It will ask you to approve the pairing:
+4. Send a message to your bot on Telegram. It will ask you to approve the pairing:
 
 ```bash
 docker compose run --rm openclaw-cli pairing approve telegram CODE
@@ -154,6 +206,7 @@ docker compose run --rm openclaw-cli pairing approve telegram CODE
 
 Replace `CODE` with the pairing code shown in the message.
 
+> [!NOTE]
 > **Webhook conflict?** If the bot was previously used in another project, you may need to remove the old webhook first:
 >
 > ```bash
@@ -165,8 +218,14 @@ Replace `CODE` with the pairing code shown in the message.
 
 ### Discord
 
-1. Create a bot on the [Discord Developer Portal](https://discord.com/developers/applications) and copy the bot token.
-2. Add the bot:
+1. Enable the Discord plugin (skip if you already selected Discord during onboarding):
+
+```bash
+docker compose run --rm openclaw-cli plugins enable discord
+```
+
+2. Create a bot on the [Discord Developer Portal](https://discord.com/developers/applications) and copy the bot token.
+3. Add the bot:
 
 ```bash
 docker compose run --rm openclaw-cli channels add --channel discord --token "YOUR_BOT_TOKEN"
@@ -174,7 +233,7 @@ docker compose run --rm openclaw-cli channels add --channel discord --token "YOU
 
 ---
 
-## Accessing the Dashboard
+## 🖥️ Accessing the Dashboard
 
 OpenClaw includes a web dashboard (Control UI) for managing your instance. The setup script automatically configures it for you.
 
@@ -188,11 +247,15 @@ docker compose run --rm openclaw-cli dashboard --no-open
 
 Open the printed URL in your browser. It looks like this:
 
-```text
+```
 http://127.0.0.1:18789/#token=YOUR_GATEWAY_TOKEN
 ```
 
-> **Important:** The token is passed after the `#` (hash), not as a `?` query parameter.
+> [!IMPORTANT]
+> 🔑 The token is passed after the `#` (hash), not as a `?` query parameter. Do not share URLs containing your token.
+
+> [!WARNING]
+> 🚫 **Never expose the dashboard directly to the internet.** The gateway should only be accessible on `127.0.0.1`. Use an SSH tunnel, Tailscale, or a reverse proxy with TLS termination for remote access. Exposed instances have been found in sensitive sectors ([Bitsight](https://www.bitsight.com/blog/openclaw-ai-security-risks-exposed-instances)). See [Security](#-security) for details.
 
 ### Remote access (reverse proxy)
 
@@ -202,13 +265,16 @@ If you access OpenClaw through a reverse proxy (Cloudflare Tunnel, nginx, Caddy,
 {
   "gateway": {
     "bind": "lan",
-    "trustedProxies": ["172.16.0.0/12"],
+    "trustedProxies": ["172.17.0.0/16"],
     "controlUi": {
       "allowInsecureAuth": true
     }
   }
 }
 ```
+
+> [!WARNING]
+> Setting `allowInsecureAuth: true` allows token authentication over plain HTTP. **Only enable this if your reverse proxy terminates TLS** — otherwise your gateway token is sent in plaintext. If you used `setup.sh`, this is `false` by default and can be opted in via `OPENCLAW_ALLOW_INSECURE_AUTH=true` in `.env`.
 
 Then restart the gateway:
 
@@ -218,7 +284,7 @@ docker compose restart openclaw-gateway
 
 Open the dashboard in your browser using your domain:
 
-```text
+```
 https://your-domain.com/#token=YOUR_GATEWAY_TOKEN
 ```
 
@@ -226,13 +292,14 @@ Replace `YOUR_GATEWAY_TOKEN` with the token from your `.env` file.
 
 **What these settings do:**
 
-| Setting | Purpose |
-| --- | --- |
-| `bind: "lan"` | Allows connections from Docker's internal network (default `loopback` blocks them) |
-| `trustedProxies` | Tells the gateway to trust proxy headers from Docker's network (`172.16.0.0/12`) |
-| `controlUi.allowInsecureAuth` | Allows the dashboard to authenticate over HTTP (needed when TLS terminates at the proxy) |
+| Setting                         | Purpose                                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| `bind: "lan"`                 | Allows connections from Docker's internal network (default `loopback` blocks them)      |
+| `trustedProxies`              | Tells the gateway to trust proxy headers from Docker's bridge network (`172.17.0.0/16`) |
+| `controlUi.allowInsecureAuth` | Allows the dashboard to authenticate over HTTP (only safe behind a TLS-terminating proxy) |
 
-### Troubleshooting the dashboard
+<details>
+<summary>🔧 <strong>Troubleshooting the dashboard</strong></summary>
 
 **"gateway token mismatch"** — The token in your browser URL does not match the token in `openclaw.json`. Check that `gateway.auth.token` in `./data/config/openclaw.json` matches the `OPENCLAW_GATEWAY_TOKEN` in your `.env` file. If they differ, update one to match the other and restart.
 
@@ -240,27 +307,32 @@ Replace `YOUR_GATEWAY_TOKEN` with the token from your `.env` file.
 
 **"Proxy headers detected from untrusted address"** — Same cause as above. Add `trustedProxies` with the Docker network range to your gateway config.
 
+</details>
+
 ---
 
-## Managing Your Server
+## ⚙️ Managing Your Server
 
 Common commands for managing your OpenClaw instance:
 
-| Action | Command |
-| --- | --- |
-| View live logs | `docker compose logs -f openclaw-gateway` |
-| Stop the server | `docker compose down` |
-| Start the server | `docker compose up -d` |
-| Restart the server | `docker compose restart openclaw-gateway` |
-| Change configuration | `docker compose run --rm openclaw-cli configure` |
-| Rebuild after updates | `docker compose down && docker compose build --no-cache && docker compose up -d` |
-| Run a security audit | `docker compose run --rm openclaw-cli security audit --deep` |
+| Action                    | Command                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| 📋 View live logs         | `docker compose logs -f openclaw-gateway`                                        |
+| ⏹️ Stop the server      | `docker compose down`                                                            |
+| ▶️ Start the server     | `docker compose up -d`                                                           |
+| 🔄 Restart the server     | `docker compose restart openclaw-gateway`                                        |
+| 💻 Interactive TUI        | `docker compose run --rm openclaw-cli tui`                                       |
+| ⚙️ Change configuration | `docker compose run --rm openclaw-cli configure`                                 |
+| 🔨 Rebuild after updates  | `docker compose down && docker compose build --no-cache && docker compose up -d` |
+| 🔒 Run a security audit   | `docker compose run --rm openclaw-cli security audit --deep`                     |
+| 🩺 Run doctor check       | `docker compose run --rm openclaw-cli doctor --repair`                           |
 
 ---
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### "Unknown model" error
+<details>
+<summary><strong>"Unknown model" error</strong></summary>
 
 If you see `Unknown model: anthropic/claude-sonnet-4`, the configured model name is outdated. Update it:
 
@@ -277,9 +349,12 @@ Available Anthropic models:
 - `anthropic/claude-sonnet-4-5`
 - `anthropic/claude-haiku-4-5`
 
-> **Which model should I choose?** See [Choosing a Model](#choosing-a-model) below for guidance.
+> **Which model should I choose?** See [Choosing a Model](#-choosing-a-model) below for guidance.
 
-### Skill installation fails (EACCES permission error)
+</details>
+
+<details>
+<summary><strong>Skill installation fails (EACCES permission error)</strong></summary>
 
 Some skills may fail to install during onboarding due to permissions. Fix it with:
 
@@ -287,7 +362,10 @@ Some skills may fail to install during onboarding due to permissions. Fix it wit
 docker compose run --rm --user root openclaw-cli npm install -g clawhub
 ```
 
-### Container won't start
+</details>
+
+<details>
+<summary><strong>Container won't start</strong></summary>
 
 Check if Docker is running:
 
@@ -307,19 +385,412 @@ Then try again:
 docker compose up -d
 ```
 
+</details>
+
 ---
 
-## Choosing a Model
+## 🔒 Security
 
-Your choice of AI model has a direct impact on the quality of responses and your API costs. Here's what you need to know.
+> [!CAUTION]
+> ⚠️ **OpenClaw has access to your files, messages and API keys.** Security researchers have identified vulnerabilities including SSRF bugs, path traversal, missing webhook authentication and malicious skills on the ClawHub marketplace. **Take security seriously — review the hardening measures below.**
+
+This Docker setup includes several hardening measures out of the box:
+
+| Measure                               | What it does                                                                     |
+| ------------------------------------- | -------------------------------------------------------------------------------- |
+| 🔏**Read-only filesystem**      | The container filesystem is immutable — malware cannot modify application files |
+| 🚫**Dropped capabilities**      | All Linux capabilities are removed (`cap_drop: ALL`)                           |
+| ⬆️**No privilege escalation** | `no-new-privileges` prevents processes from gaining additional permissions     |
+| 📊**Resource limits**           | Memory, CPU, and PID limits prevent resource exhaustion and fork-bomb attacks    |
+| 🏠**Localhost binding**         | Ports are bound to `127.0.0.1` — the gateway is not exposed to the internet   |
+| 🔑**Token authentication**      | A 256-bit gateway token is required for all dashboard and API access             |
+| 🛡️**Auth rate limiting**      | Brute-force protection: 10 attempts per minute, 5-minute lockout                 |
+| 💓**Health checks**             | Docker automatically detects and restarts unhealthy containers                   |
+| 🌐**Isolated network**          | Containers run in a dedicated Docker network                                     |
+
+### 🛡️ Application-level hardening
+
+In addition to Docker container isolation, the setup script applies these **application-level** security settings to `openclaw.json`:
+
+| Setting | Value | What it does |
+| --- | --- | --- |
+| `session.dmScope` | `"per-channel-peer"` | Each sender gets an isolated session — prevents cross-user context leakage |
+| `tools.deny` | `["sessions_spawn", "sessions_send"]` | Blocks session hijacking tools |
+| `tools.exec.security` | `"full"` | Allows command execution (for custom scripts) |
+| `tools.fs.workspaceOnly` | `true` | Restricts file access to the workspace directory only |
+| `browser.ssrfPolicy.dangerouslyAllowPrivateNetwork` | `false` | Blocks browser access to private/internal networks (SSRF protection) |
+| `logging.redactSensitive` | `"tools"` | Redacts tokens and secrets from log output |
+| `discovery.mdns.mode` | `"off"` | Disables mDNS broadcast (leaks hostname and install path) |
+
+> [!CAUTION]
+> ⚠️ **Command execution is enabled by default** (`tools.exec.security: "full"`). This allows the AI to run scripts and commands on your server. The bot **cannot**:
+>
+> - ❌ Spawn or hijack other sessions
+> - ❌ Access files outside the workspace directory
+> - ❌ Access your internal network via browser (SSRF protection)
+>
+> If you don't need command execution, set `tools.exec.security` to `"deny"` or use `"allowlist"` mode for a safer middle ground. See the [OpenClaw security docs](https://docs.openclaw.ai/gateway/security) for details.
+
+<details>
+<summary>🔓 <strong>Relaxing tool restrictions (at your own risk)</strong></summary>
+
+To re-enable specific capabilities, edit `./data/config/openclaw.json`:
+
+**Allow browser automation** (needed for web search/scraping skills):
+
+```json
+{
+  "browser": {
+    "ssrfPolicy": { "dangerouslyAllowPrivateNetwork": false }
+  },
+  "tools": {
+    "profile": "full"
+  }
+}
+```
+
+**Allow command execution** (needed for code/shell skills):
+
+```json
+{
+  "tools": {
+    "exec": {
+      "security": "ask",
+      "ask": "always"
+    }
+  }
+}
+```
+
+**Allow filesystem writes** (needed for file management skills):
+
+```json
+{
+  "tools": {
+    "fs": { "workspaceOnly": true }
+  }
+}
+```
+
+**Allow custom scripts** (needed for email, automation or other custom integrations):
+
+If you want the AI to run your own scripts (e.g. check email, query a database, send notifications), use `allowlist` mode with `safeBins` to restrict execution to trusted commands only.
+
+1. Create a scripts directory:
+
+```bash
+mkdir -p ./data/config/scripts
+chmod +x ./data/config/scripts/*.sh
+```
+
+1. Update `tools` in `./data/config/openclaw.json`:
+
+```json
+{
+  "tools": {
+    "deny": [
+      "sessions_spawn",
+      "sessions_send"
+    ],
+    "exec": {
+      "security": "allowlist",
+      "safeBins": ["bash"],
+      "safeBinTrustedDirs": ["/home/node/.openclaw/scripts"]
+    },
+    "fs": {
+      "workspaceOnly": true
+    }
+  }
+}
+```
+
+> **What this does:**
+>
+> | Setting | Effect |
+> | --- | --- |
+> | `security: "allowlist"` | Only pre-approved commands can run (instead of everything or nothing) |
+> | `safeBins: ["bash"]` | Allows `bash` as an interpreter for your scripts |
+> | `safeBinTrustedDirs` | Only scripts in this directory can be executed |
+> | Removed `group:runtime` from `deny` | Unblocks the exec tool (required for scripts to work) |
+> | Removed `profile: "messaging"` | The messaging profile blocks exec entirely — remove it or change to `"full"` |
+>
+> **Security notes:**
+>
+> - Only place scripts you trust in the `scripts/` directory — the AI can execute anything in it
+> - Keep `sessions_spawn` and `sessions_send` in the deny list to prevent the AI from creating new sessions
+> - Keep `fs.workspaceOnly: true` to restrict file access
+> - Review your scripts for command injection vulnerabilities (e.g. unsanitized user input passed to shell commands)
+> - Use `security: "allowlist"` instead of `"full"` — `"full"` allows the AI to run **any** command on your server
+
+After any change, restart the gateway:
+
+```bash
+docker compose restart openclaw-gateway
+```
+
+> **Keep `browser.ssrfPolicy.dangerouslyAllowPrivateNetwork: false`** even when relaxing other settings. This prevents the bot's browser from reaching internal services on your network (databases, admin panels, etc.).
+
+</details>
+
+### 🩺 Run security checks
+
+Run these commands regularly and after every update:
+
+```bash
+# Detect and fix configuration issues
+docker compose run --rm openclaw-cli doctor --repair
+
+# Deep security audit
+docker compose run --rm openclaw-cli security audit --deep
+```
+
+### 🔑 Rotate your gateway token
+
+Rotate your token periodically and immediately if you suspect it has been compromised:
+
+```bash
+# 1. Generate a new token
+NEW_TOKEN=$(openssl rand -hex 32)
+
+# 2. Update .env
+sed -i "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=${NEW_TOKEN}/" .env
+
+# 3. Update the config file
+OC_NEW_TOKEN="$NEW_TOKEN" python3 -c "
+import json, os
+token = os.environ['OC_NEW_TOKEN']
+with open('./data/config/openclaw.json') as f: cfg = json.load(f)
+cfg['gateway']['auth']['token'] = token
+with open('./data/config/openclaw.json', 'w') as f: json.dump(cfg, f, indent=2)
+"
+
+# 4. Restart
+docker compose restart openclaw-gateway
+```
+
+### ⚠️ Skill marketplace safety
+
+> [!WARNING]
+> 🦠 **26% of agent skills** on public marketplaces contain at least one vulnerability. Malicious skills have been used to **exfiltrate data and distribute malware** ([Cisco](https://blogs.cisco.com/ai/personal-ai-agents-like-openclaw-are-a-security-nightmare), [Trend Micro](https://www.trendmicro.com/en_us/research/26/b/openclaw-skills-used-to-distribute-atomic-macos-stealer.html)). Never install skills without reviewing the source code first.
+
+- **Never install skills without reviewing their source code**
+- Only use skills from trusted authors
+- Monitor what skills are installed: check `./data/config/` for unexpected additions
+- Disable skills you don't actively use
+
+### 🌍 Remote access best practices
+
+- **Never bind the gateway to a public IP address** — keep it on `127.0.0.1`
+- Use **SSH tunnels** or **Tailscale** for remote access
+- If using a reverse proxy (Cloudflare Tunnel, nginx, Caddy), always terminate TLS at the proxy
+- See [Accessing the Dashboard](#️-accessing-the-dashboard) for reverse proxy configuration
+
+### 📚 Further reading
+
+| Source                                                                                                                      | Topic                                  |
+| --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| [Aikido](https://www.aikido.dev/blog/why-trying-to-secure-openclaw-is-ridiculous)                                              | Security architecture analysis         |
+| [Microsoft](https://www.microsoft.com/en-us/security/blog/2026/02/19/running-openclaw-safely-identity-isolation-runtime-risk/) | Identity isolation and runtime risk    |
+| [Cisco](https://blogs.cisco.com/ai/personal-ai-agents-like-openclaw-are-a-security-nightmare)                                  | Skill marketplace risks                |
+| [Infosecurity Magazine](https://www.infosecurity-magazine.com/news/researchers-six-new-openclaw/)                              | Endor Labs: 6 new vulnerabilities      |
+| [Bitsight](https://www.bitsight.com/blog/openclaw-ai-security-risks-exposed-instances)                                         | Exposed instances in sensitive sectors |
+| [Trend Micro](https://www.trendmicro.com/en_us/research/26/b/openclaw-skills-used-to-distribute-atomic-macos-stealer.html)     | Atomic macOS Stealer via skills        |
+| [University of Toronto](https://security.utoronto.ca/advisories/openclaw-vulnerability-notification/)                          | CVE-2026-25253 advisory                |
+| [GBHackers](https://gbhackers.com/openclaw-2026-2-12-released/)                                                                | 40+ security fixes in v2026.2.12       |
+| [OpenClaw Docs](https://docs.openclaw.ai/gateway/security)                                                                     | Security configuration reference       |
+| [OpenClaw Docs](https://docs.openclaw.ai/gateway/doctor)                                                                       | Built-in config auditing               |
+| [OpenClaw Docs](https://docs.openclaw.ai/gateway/remote)                                                                       | Secure remote access                   |
+
+---
+
+## 🔄 Updating
+
+> [!IMPORTANT]
+> 🔄 **Keep your OpenClaw instance up to date.** Security patches are released frequently — version 2026.2.12 alone fixed over **40 security issues** ([GBHackers](https://gbhackers.com/openclaw-2026-2-12-released/)).
+
+### Step-by-step update
+
+```bash
+# 1. Back up your data
+cp -r ./data ./data-backup-$(date +%Y%m%d)
+
+# 2. Pull the latest changes to this repo
+git pull origin main
+
+# 3. Rebuild the Docker image (picks up new base image + Dockerfile changes)
+docker compose build --no-cache
+
+# 4. Restart with the new image
+docker compose down && docker compose up -d
+
+# 5. Run security checks
+docker compose run --rm openclaw-cli doctor --repair
+docker compose run --rm openclaw-cli security audit --deep
+
+# 6. Verify the gateway is healthy
+docker compose logs -f openclaw-gateway
+```
+
+<details>
+<summary>⚡ <strong>Quick one-liner</strong> (for experienced users)</summary>
+
+```bash
+cp -r ./data ./data-backup-$(date +%Y%m%d) && git pull origin main && docker compose build --no-cache && docker compose down && docker compose up -d && docker compose run --rm openclaw-cli doctor --repair
+```
+
+</details>
+
+### 📡 Staying informed
+
+- **Watch this repository** on GitHub to get notified of new releases
+- **Watch the upstream** [OpenClaw repository](https://github.com/openclaw/openclaw) for security advisories
+- Check the [OpenClaw changelog](https://docs.openclaw.ai) after each update
+
+---
+
+## 📦 Migrating to Hardened Setup
+
+If you installed OpenClaw using an older version of this repository (before the security hardening), follow these steps to apply the new security features to your existing installation. This guide works whether you used `git clone` or manually uploaded the files.
+
+### What changed
+
+The hardened setup adds:
+
+| Feature                      | Description                                                               |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| 🔏 Read-only filesystem      | Container files cannot be modified at runtime                             |
+| 🚫 Dropped capabilities      | All Linux capabilities removed                                            |
+| ⬆️ No privilege escalation | Processes cannot gain new privileges                                      |
+| 📊 Resource limits           | Memory, CPU, and PID caps                                                 |
+| 💓 Health checks             | Auto-detect and restart unhealthy containers                              |
+| 🌐 Isolated network          | Dedicated Docker bridge network                                           |
+| 🎯 Narrower trusted proxies  | Dynamically detected Docker bridge subnet (defaults to `172.17.0.0/16`) |
+| 🛡️ Auth rate limiting      | Brute-force protection                                                    |
+| 🩺 Auto security auditing    | `doctor` and `audit` run during setup                                 |
+| 👤 Session isolation         | Each sender gets isolated context (`per-channel-peer`)                  |
+| 🔒 Tool restrictions         | Messaging-only profile, exec denied, filesystem restricted                |
+| 🌐 SSRF protection           | Browser blocked from private networks                                     |
+| 📝 Log redaction             | Tokens and secrets hidden from logs                                       |
+| 📡 mDNS disabled             | No network broadcast of hostname/path                                     |
+
+### Files changed
+
+These files were modified or added in the hardened setup. If you uploaded files manually (without git), you need to update each of these:
+
+| File | Change |
+| --- | --- |
+| `docker-compose.yaml` | Added read-only FS, dropped capabilities, resource limits, healthcheck, isolated network, tmpfs mounts |
+| `Dockerfile` | Added `curl` (required for container health checks) |
+| `.dockerignore` | **New file** — prevents `.env` and `data/` from leaking into the Docker build |
+| `setup.sh` | Added token generation, config patching, security auditing |
+| `.env.example` | Added `OPENCLAW_ALLOW_INSECURE_AUTH` option |
+
+> [!TIP]
+> The easiest way to get all file changes at once — even if you didn't use `git clone` originally — is to initialize git in your existing directory. See step 2 (Option B) below.
+
+### Migration steps
+
+```bash
+# 1. Back up your data first
+cp -r ./data ./data-backup-$(date +%Y%m%d)
+
+# 2. Get the latest files
+#    Option A: If you used git clone
+git pull origin main
+
+#    Option B: If you uploaded files manually, initialize git first:
+#    git init && git remote add origin https://github.com/MadeByAdem/openClaw-Docker.git
+#    git fetch origin
+#    mv Dockerfile docker-compose.yaml setup.sh /tmp/openclaw-backup/
+#    git checkout -b main origin/main
+
+# 3. Restrict .env file permissions
+chmod 600 .env
+
+# 4. (Recommended) Rotate your gateway token
+NEW_TOKEN=$(openssl rand -hex 32)
+sed -i "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=${NEW_TOKEN}/" .env
+DOCKER_SUBNET=$(docker network inspect bridge --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null || echo "172.17.0.0/16")
+OC_NEW_TOKEN="$NEW_TOKEN" OC_DOCKER_SUBNET="$DOCKER_SUBNET" python3 -c "
+import json, os
+token = os.environ['OC_NEW_TOKEN']
+docker_subnet = os.environ['OC_DOCKER_SUBNET']
+with open('./data/config/openclaw.json') as f: cfg = json.load(f)
+
+# Gateway auth + networking
+cfg['gateway']['auth']['token'] = token
+cfg['gateway']['auth']['rateLimit'] = {'maxAttempts': 10, 'windowMs': 60000, 'lockoutMs': 300000}
+cfg['gateway']['trustedProxies'] = [docker_subnet]
+
+# Session isolation
+cfg.setdefault('session', {})['dmScope'] = 'per-channel-peer'
+
+# Tool restrictions (messaging-only, no exec, workspace-only fs)
+tools = cfg.setdefault('tools', {})
+tools['profile'] = 'messaging'
+tools['deny'] = ['group:automation', 'group:runtime', 'sessions_spawn', 'sessions_send']
+tools.setdefault('exec', {})['security'] = 'deny'
+tools.setdefault('fs', {})['workspaceOnly'] = True
+
+# SSRF protection + logging + mDNS
+cfg.setdefault('browser', {}).setdefault('ssrfPolicy', {})['dangerouslyAllowPrivateNetwork'] = False
+cfg.setdefault('logging', {})['redactSensitive'] = 'tools'
+cfg.setdefault('discovery', {}).setdefault('mdns', {})['mode'] = 'off'
+
+with open('./data/config/openclaw.json', 'w') as f: json.dump(cfg, f, indent=2)
+"
+
+# 5. Rebuild the Docker image
+docker compose build --no-cache
+
+# 6. Restart with hardened configuration
+docker compose down && docker compose up -d
+
+# 7. Run security checks
+docker compose run --rm openclaw-cli doctor --repair
+docker compose run --rm openclaw-cli security audit --deep
+
+# 8. Verify the container is healthy
+docker inspect --format='{{.State.Health.Status}}' openclaw-gateway
+```
+
+<details>
+<summary>⚡ <strong>Migration one-liner</strong></summary>
+
+```bash
+cp -r ./data ./data-backup-$(date +%Y%m%d) && git pull origin main && chmod 600 .env && docker compose build --no-cache && docker compose down && docker compose up -d && docker compose run --rm openclaw-cli doctor --repair
+```
+
+</details>
+
+<details>
+<summary>🔧 <strong>Troubleshooting the migration</strong></summary>
+
+**Container won't start after migration** — The read-only filesystem may conflict with directories that need write access. The `tmpfs` mounts in `docker-compose.yaml` should handle this, but if you see permission errors, check that the `data/` directory is owned by uid 1000:
+
+```bash
+sudo chown -R 1000:1000 ./data
+```
+
+**"Health check failed"** — The health check expects the gateway to respond on port 18789. Give it up to 60 seconds after starting (the `start_period`). Check logs with `docker compose logs openclaw-gateway`.
+
+**Skills not working** — Some skills may need write access to directories not covered by `tmpfs`. If a specific skill fails, check its error logs and consider adding the required path as a `tmpfs` mount in `docker-compose.yaml`.
+
+</details>
+
+---
+
+## 🤖 Choosing a Model
+
+Your choice of AI model has a direct impact on the quality of responses and your API costs.
 
 ### Model comparison
 
-| Model | Strengths | Cost level |
-| --- | --- | --- |
-| `anthropic/claude-haiku-4-5` | Fast, lightweight, good for simple tasks | Lowest |
-| `anthropic/claude-sonnet-4-5` | Balanced: capable and cost-effective | Medium |
-| `anthropic/claude-opus-4-5` | Most capable, best for complex reasoning | Highest |
+| Model                           | Strengths                                   | Cost   |
+| ------------------------------- | ------------------------------------------- | ------ |
+| `anthropic/claude-haiku-4-5`  | ⚡ Fast, lightweight, good for simple tasks | 💰     |
+| `anthropic/claude-sonnet-4-5` | ⚖️ Balanced: capable and cost-effective   | 💰💰   |
+| `anthropic/claude-opus-4-5`   | 🧠 Most capable, best for complex reasoning | 💰💰💰 |
 
 ### Recommendations
 
@@ -327,18 +798,22 @@ Your choice of AI model has a direct impact on the quality of responses and your
 - **Use Haiku for high-volume, simple tasks.** If your bot handles many short interactions (quick Q&A, simple lookups), Haiku keeps costs low while still delivering good results.
 - **Reserve Opus for complex work.** Opus excels at multi-step reasoning, detailed analysis and creative tasks — but it costs significantly more per message. Only use it when you genuinely need the extra capability.
 
-### Advanced: use different models per task type
+<details>
+<summary>🔀 <strong>Advanced: use different models per task type</strong></summary>
 
 You can significantly reduce costs by routing tasks to the right model automatically. Instead of using a single model for everything, configure your assistant to:
 
 - **Use Haiku for routine tasks** — emails, calendar queries, simple Q&A, summaries and other straightforward interactions.
 - **Use Sonnet for complex tasks** — code generation, debugging, technical analysis and multi-step reasoning.
 
-This "model routing" approach can reduce your per-session costs by 60–70%, because the majority of everyday interactions don't need the most capable (and most expensive) model.
+This "model routing" approach can reduce your per-session costs by **60–70%**, because the majority of everyday interactions don't need the most capable (and most expensive) model.
 
 You can set this up by defining task categories and model assignments in your OpenClaw configuration or via an `AGENTS.md` file in your workspace.
 
-### Advanced: use Claude Code CLI for code tasks
+</details>
+
+<details>
+<summary>💻 <strong>Advanced: use Claude Code CLI for code tasks</strong></summary>
 
 If you frequently ask your assistant to analyze or generate code, consider offloading those tasks to [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic's CLI tool). Claude Code is optimized for coding workflows and can be more efficient than running code tasks through the chat interface, because it:
 
@@ -348,27 +823,32 @@ If you frequently ask your assistant to analyze or generate code, consider offlo
 
 You can configure OpenClaw to prioritize Claude Code CLI for code-related skills.
 
-### OpenAI OAuth (use your paid subscription instead of API credits)
+</details>
+
+<details>
+<summary>🔓 <strong>OpenAI OAuth (use your paid subscription instead of API credits)</strong></summary>
 
 If you have a paid OpenAI account (ChatGPT Plus, Pro, or Team), you can connect via **OAuth** instead of an API key. This means usage is deducted from your subscription allowance rather than billed separately through the API — which can be significantly cheaper or even free depending on your plan.
 
 During onboarding, select **OpenAI** as your provider and choose the **OAuth** login method. OpenClaw will open a browser-based login flow. Once authenticated, your OpenAI models (like `gpt-4o`) will use your subscription quota.
 
-> **Tip:** You can combine providers — for example, use OpenAI OAuth for GPT models and an Anthropic API key for Claude models. Configure fallback models in `./data/config/openclaw.json` under `agents.defaults.model`.
+> **Note:** OpenAI is currently the only provider tested with OAuth. Other providers use API keys.
+>
+> **Tip:** You can combine providers — for example, use OpenAI OAuth for GPT models and a separate API key for Claude or Gemini models. Configure fallback models in `./data/config/openclaw.json` under `agents.defaults.model`.
 
-### Keeping costs under control
+</details>
 
-- **Monitor your API usage** through your provider's dashboard ([Anthropic Console](https://console.anthropic.com/), [OpenAI Platform](https://platform.openai.com/)). Set spending alerts and budget limits before going live.
-- **Set a monthly budget limit** with your API provider to avoid surprises. Both Anthropic and OpenAI allow you to configure hard spending caps.
-- **Minimize context size.** Only load documents and files when they're actually needed instead of including them in every message. This can drastically reduce the number of tokens sent per request.
-- **Longer conversations cost more.** Each message in a conversation includes the full history, so costs grow as conversations get longer. Consider restarting conversations when the topic changes.
-- **Use text-to-speech sparingly.** If your assistant supports TTS, configure it to only generate audio when the user sends a voice message or explicitly asks for it — not on every response.
-- **Skills and tools add cost.** When the assistant uses browser automation or other skills, it generates extra API calls. Keep this in mind for automated workflows.
-- **Test in low-traffic environments first.** Before connecting a busy group chat, test your setup with one or two users to get a feel for actual usage patterns and costs.
+### 💸 Keeping costs under control
+
+- **Monitor your API usage** through your provider's dashboard (e.g. [OpenAI Platform](https://platform.openai.com/), [Anthropic Console](https://console.anthropic.com/), [Google AI Studio](https://aistudio.google.com/)). Set spending alerts and budget limits before going live.
+- **Set a monthly budget limit** with your API provider to avoid surprises.
+- **Minimize context size.** Only load documents and files when they're actually needed.
+- **Longer conversations cost more.** Each message includes the full history — consider restarting conversations when the topic changes.
+- **Use text-to-speech sparingly.** Configure it to only generate audio when the user sends a voice message.
+- **Skills and tools add cost.** Browser automation and other skills generate extra API calls.
+- **Test in low-traffic environments first.** Test with one or two users before connecting a busy group chat.
 
 ### Changing your model
-
-You can switch models at any time via the CLI:
 
 ```bash
 docker compose run --rm openclaw-cli configure
@@ -378,18 +858,20 @@ Or edit the configuration file directly at `./data/config/openclaw.json`.
 
 ---
 
-## File Overview
+## 📁 File Overview
 
-| File | Description |
-| --- | --- |
-| `docker-compose.yaml` | Defines the gateway and CLI services |
-| `Dockerfile` | Extends the official OpenClaw image with Chromium |
-| `.env.example` | Template for environment variables |
-| `setup.sh` | Automated setup script (run once) |
+| File                    | Description                                                          |
+| ----------------------- | -------------------------------------------------------------------- |
+| `docker-compose.yaml` | 🐳 Defines the gateway and CLI services with security hardening      |
+| `Dockerfile`          | 📦 Extends the official OpenClaw image with Chromium browser support |
+| `.env.example`        | 🔑 Template for environment variables                                |
+| `setup.sh`            | 🚀 Automated setup script with security auditing (run once)          |
+| `SECURITY.md`         | 🔒 Security policy and hardening documentation                       |
+| `.dockerignore`       | 🚫 Prevents secrets from leaking into the Docker build               |
 
 ---
 
-## Data & Backups
+## 💾 Data & Backups
 
 All persistent data is stored in the `./data/` directory:
 
@@ -409,6 +891,12 @@ cp -r ./data ./data-backup-$(date +%Y%m%d)
 
 ---
 
-## License
+## 📄 License
 
 This project is licensed under the [MIT License](LICENSE) — free to use, modify and distribute.
+
+---
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/MadeByAdem">MadeByAdem</a>
+</p>

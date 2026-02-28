@@ -1,0 +1,24 @@
+# Secrets
+.env
+
+# Persistent data and backups
+data/
+backup/
+
+# Git
+.git/
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+.claude/
+
+# Documentation (not needed in image)
+*.md
+LICENSE
+
+# Images
+*.png
+*.jpg
+*.jpeg

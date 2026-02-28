@@ -14,10 +14,29 @@ services:
       - ${OPENCLAW_WORKSPACE_DIR:-./data/workspace}:/home/node/.openclaw/workspace
     shm_size: '2gb'
     ports:
-      - "127.0.0.1:18789:18789"
-      - "127.0.0.1:18790:18790"
+      - "127.0.0.1:18789:18789"   # Gateway API
+      - "127.0.0.1:18790:18790"   # Dashboard UI
     init: true
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+      - /home/node/.openclaw/browser:size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 4g
+    cpus: 2.0
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    networks:
+      - openclaw-net
     command:
       [
         "node",
@@ -37,6 +56,7 @@ services:
       HOME: /home/node
       TERM: xterm-256color
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      OPENCLAW_GATEWAY_URL: ws://openclaw-gateway:18789
       BROWSER: echo
       CHROME_BIN: /usr/local/bin/chromium-docker
     volumes:
@@ -45,6 +65,22 @@ services:
     stdin_open: true
     tty: true
     init: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    mem_limit: 2g
+    cpus: 1.0
+    pids_limit: 128
     entrypoint: ["node", "dist/index.js"]
     profiles:
       - cli
+    networks:
+      - openclaw-net
+
+networks:
+  openclaw-net:
+    driver: bridge
