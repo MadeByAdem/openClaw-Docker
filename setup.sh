@@ -59,7 +59,34 @@ if [ -z "$CURRENT_TOKEN" ]; then
   sed -i "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=${TOKEN}/" "$ENV_FILE"
   echo "[OK] Gateway token generated and stored in .env"
 else
+  TOKEN="$CURRENT_TOKEN"
   echo "[OK] Gateway token already exists"
+fi
+
+# --- Create data/config/.env for OpenClaw env var substitution ---
+# OpenClaw reads ~/.openclaw/.env inside the container, which maps to ./data/config/.env
+CONFIG_ENV_FILE="${OPENCLAW_CONFIG_DIR:-./data/config}/.env"
+
+if [ ! -f "$CONFIG_ENV_FILE" ]; then
+  cat > "$CONFIG_ENV_FILE" << EOF
+# OpenClaw environment variables
+# Referenced as \${VAR_NAME} in openclaw.json
+GATEWAY_TOKEN=${TOKEN}
+EOF
+  chown 1000:1000 "$CONFIG_ENV_FILE" 2>/dev/null || {
+    echo "[!]  Could not change ownership of $CONFIG_ENV_FILE to uid 1000."
+    echo "     Run: sudo chown 1000:1000 $CONFIG_ENV_FILE"
+  }
+  chmod 600 "$CONFIG_ENV_FILE"
+  echo "[OK] Created $CONFIG_ENV_FILE with gateway token"
+else
+  # Ensure the gateway token is synced
+  if grep -q "^GATEWAY_TOKEN=" "$CONFIG_ENV_FILE" 2>/dev/null; then
+    sed -i "s/^GATEWAY_TOKEN=.*/GATEWAY_TOKEN=${TOKEN}/" "$CONFIG_ENV_FILE"
+  else
+    echo "GATEWAY_TOKEN=${TOKEN}" >> "$CONFIG_ENV_FILE"
+  fi
+  echo "[OK] $CONFIG_ENV_FILE already exists — gateway token synced"
 fi
 
 # --- Build custom image ---
@@ -103,9 +130,10 @@ gw = cfg.setdefault('gateway', {})
 # Bind to LAN so Docker port-forwarding works (loopback blocks it)
 gw['bind'] = 'lan'
 
-# Sync the gateway token from .env into the config file
+# Use env var reference instead of plaintext token
+# The actual value is stored in data/config/.env and resolved at startup
 gw.setdefault('auth', {})['mode'] = 'token'
-gw['auth']['token'] = gateway_token
+gw['auth']['token'] = '\${GATEWAY_TOKEN}'
 
 # Trust Docker bridge network only (detected dynamically)
 gw['trustedProxies'] = [docker_subnet]

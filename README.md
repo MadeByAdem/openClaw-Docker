@@ -46,6 +46,7 @@
 - [💬 Connecting Channels](#-connecting-channels)
 - [🖥️ Accessing the Dashboard](#️-accessing-the-dashboard)
 - [⚙️ Managing Your Server](#️-managing-your-server)
+- [🔐 Environment Variables](#-environment-variables)
 - [🔧 Troubleshooting](#-troubleshooting)
 - [🔒 Security](#-security)
 - [🔄 Updating](#-updating)
@@ -375,6 +376,79 @@ Common commands for managing your OpenClaw instance:
 
 ---
 
+## 🔐 Environment Variables
+
+You can use `${VAR_NAME}` references in `openclaw.json` instead of hardcoding secrets like API keys, bot tokens and chat IDs. OpenClaw resolves these references at startup from environment variables.
+
+### Example
+
+Instead of hardcoding your Telegram bot token:
+
+```json
+{
+  "channels": {
+    "telegram": {
+      "botToken": "123456:ABC-DEF..."
+    }
+  }
+}
+```
+
+Reference an environment variable:
+
+```json
+{
+  "channels": {
+    "telegram": {
+      "botToken": "${TELEGRAM_BOT_TOKEN}"
+    }
+  }
+}
+```
+
+### Where to put the `.env` file
+
+This project uses **two** `.env` files with different purposes:
+
+| File | Read by | Purpose |
+| --- | --- | --- |
+| `./.env` (project root) | Docker Compose | Interpolates `${...}` variables in `docker-compose.yaml` |
+| `./data/config/.env` | OpenClaw | Resolves `${...}` references in `openclaw.json` |
+
+The **project root** `.env` is created by `setup.sh` and feeds Docker Compose. It does **not** reach OpenClaw inside the container.
+
+To use `${VAR}` references in `openclaw.json`, create a `.env` file in the **config directory**:
+
+```bash
+# Create the file
+cat > ./data/config/.env << 'EOF'
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+GATEWAY_TOKEN=your-gateway-token
+OPENAI_API=sk-...
+NOTION_API=secret_...
+EOF
+
+# Set ownership to the container's node user (uid 1000)
+chown 1000:1000 ./data/config/.env
+
+# Restrict permissions
+chmod 600 ./data/config/.env
+```
+
+> [!IMPORTANT]
+> The file **must** be owned by uid `1000:1000` (the `node` user inside the container). If it is owned by `root`, OpenClaw cannot read it and will fail with `MissingEnvVarError`.
+
+Then restart the gateway:
+
+```bash
+docker compose restart openclaw-gateway
+```
+
+> [!WARNING]
+> **Known issue:** Commands like `doctor --fix`, `configure` and `update` can resolve `${VAR}` references back to **plaintext** and write the actual secrets into `openclaw.json`. After running these commands, check `openclaw.json` and restore any `${...}` references that were overwritten.
+
+---
+
 ## 🔧 Troubleshooting
 
 <details>
@@ -598,21 +672,18 @@ Rotate your token periodically and immediately if you suspect it has been compro
 # 1. Generate a new token
 NEW_TOKEN=$(openssl rand -hex 32)
 
-# 2. Update .env
+# 2. Update root .env (used by Docker Compose)
 sed -i "s/^OPENCLAW_GATEWAY_TOKEN=.*/OPENCLAW_GATEWAY_TOKEN=${NEW_TOKEN}/" .env
 
-# 3. Update the config file
-OC_NEW_TOKEN="$NEW_TOKEN" python3 -c "
-import json, os
-token = os.environ['OC_NEW_TOKEN']
-with open('./data/config/openclaw.json') as f: cfg = json.load(f)
-cfg['gateway']['auth']['token'] = token
-with open('./data/config/openclaw.json', 'w') as f: json.dump(cfg, f, indent=2)
-"
+# 3. Update data/config/.env (used by OpenClaw for ${GATEWAY_TOKEN} in openclaw.json)
+sed -i "s/^GATEWAY_TOKEN=.*/GATEWAY_TOKEN=${NEW_TOKEN}/" ./data/config/.env
 
 # 4. Restart
 docker compose restart openclaw-gateway
 ```
+
+> [!NOTE]
+> If your `openclaw.json` uses `"${GATEWAY_TOKEN}"` (recommended), you only need to update the `.env` files — not `openclaw.json` itself. See [Environment Variables](#-environment-variables) for details.
 
 ### ⚠️ Skill marketplace safety
 

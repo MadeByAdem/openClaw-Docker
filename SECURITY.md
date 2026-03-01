@@ -109,6 +109,7 @@ If you need the bot to run custom scripts (e.g. checking email, querying databas
 
 - 🔄 Keep your installation up to date (see [Updating](README.md#-updating))
 - 🔑 Rotate your gateway token periodically
+- 🔐 Use `${VAR}` references in `openclaw.json` for secrets — store actual values in `./data/config/.env` (see [Environment Variables](README.md#-environment-variables))
 - 🩺 Run `docker compose run --rm openclaw-cli security audit --deep` regularly
 - 🌍 Never expose the gateway to a public IP — use SSH tunnels or Tailscale
 - ⚠️ Review skill source code before installing from ClawHub
